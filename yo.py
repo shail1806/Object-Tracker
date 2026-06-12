@@ -233,40 +233,46 @@ if option == "Image Detection":
 # =====================================================
 # CAMERA DETECTION (STREAMLIT CLOUD COMPATIBLE)
 # =====================================================
-
 elif option == "Webcam Detection":
 
     st.subheader("📷 Camera Detection")
 
-    camera_image = st.camera_input("Capture Image")
+    start_camera = st.checkbox("Start Camera")
 
-    if camera_image is not None:
+    if start_camera:
 
-        image = Image.open(camera_image)
+        camera_image = st.camera_input("Capture Image")
 
-        frame = np.array(image)
+        if camera_image is not None:
 
-        # YOLO Detection
-        results = model(frame)
+            image = Image.open(camera_image)
 
-        annotated_frame = results[0].plot()
+            frame = np.array(image)
 
-        st.image(
-            annotated_frame,
-            caption="Detected Objects",
-            use_container_width=True
-        )
+            # YOLO Detection
+            results = model(frame)
 
-        # Display detected objects
-        detected_objects = []
+            annotated_frame = results[0].plot()
 
-        for box in results[0].boxes:
-            cls = int(box.cls[0])
-            label = model.names[cls]
-            detected_objects.append(label)
+            st.image(
+                annotated_frame,
+                caption="Detected Objects",
+                use_container_width=True
+            )
 
-        st.subheader("📋 Detected Objects")
-        st.write(detected_objects)
+            # Detected Objects
+            detected_objects = []
+
+            for box in results[0].boxes:
+                cls = int(box.cls[0])
+                label = model.names[cls]
+                detected_objects.append(label)
+
+            st.subheader("📋 Detected Objects")
+            st.write(detected_objects)
+
+    else:
+        st.info("Click 'Start Camera' to enable camera capture.")
 
 # =====================================================
 # FOOTER
