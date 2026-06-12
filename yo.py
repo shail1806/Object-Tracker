@@ -1,7 +1,8 @@
 
 # Install:
 # pip install streamlit ultralytics opencv-python pillow pandas
-
+from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+import av
 import streamlit as st
 from ultralytics import YOLO
 from PIL import Image
@@ -229,50 +230,45 @@ if option == "Image Detection":
 # =====================================================
 # WEBCAM DETECTION
 # =====================================================
+# =====================================================
+# WEBCAM DETECTION (LIVE STREAMLIT CLOUD VERSION)
+# =====================================================
 
-# =====================================================
-# CAMERA DETECTION (STREAMLIT CLOUD COMPATIBLE)
-# =====================================================
 elif option == "Webcam Detection":
 
-    st.subheader("📷 Camera Detection")
+    st.subheader("📷 Live Webcam Detection")
+
+    from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+    import av
+
+    class YOLOVideoProcessor(VideoProcessorBase):
+
+        def recv(self, frame):
+
+            img = frame.to_ndarray(format="bgr24")
+
+            # YOLO Detection
+            results = model(img)
+
+            annotated_frame = results[0].plot()
+
+            return av.VideoFrame.from_ndarray(
+                annotated_frame,
+                format="bgr24"
+            )
 
     start_camera = st.checkbox("Start Camera")
 
     if start_camera:
 
-        camera_image = st.camera_input("Capture Image")
-
-        if camera_image is not None:
-
-            image = Image.open(camera_image)
-
-            frame = np.array(image)
-
-            # YOLO Detection
-            results = model(frame)
-
-            annotated_frame = results[0].plot()
-
-            st.image(
-                annotated_frame,
-                caption="Detected Objects",
-                use_container_width=True
-            )
-
-            # Detected Objects
-            detected_objects = []
-
-            for box in results[0].boxes:
-                cls = int(box.cls[0])
-                label = model.names[cls]
-                detected_objects.append(label)
-
-            st.subheader("📋 Detected Objects")
-            st.write(detected_objects)
-
-    else:
-        st.info("Click 'Start Camera' to enable camera capture.")
+        webrtc_streamer(
+            key="live-detection",
+            video_processor_factory=YOLOVideoProcessor,
+            media_stream_constraints={
+                "video": True,
+                "audio": False
+            }
+        )
 
 # =====================================================
 # FOOTER
