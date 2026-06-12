@@ -230,35 +230,43 @@ if option == "Image Detection":
 # WEBCAM DETECTION
 # =====================================================
 
+# =====================================================
+# CAMERA DETECTION (STREAMLIT CLOUD COMPATIBLE)
+# =====================================================
+
 elif option == "Webcam Detection":
 
-    st.subheader("📷 Live Webcam Detection")
+    st.subheader("📷 Camera Detection")
 
-    run = st.checkbox("Start Camera")
+    camera_image = st.camera_input("Capture Image")
 
-    FRAME_WINDOW = st.image([])
+    if camera_image is not None:
 
-    camera = cv2.VideoCapture(0)
+        image = Image.open(camera_image)
 
-    while run:
-
-        ret, frame = camera.read()
-
-        if not ret:
-            st.error("Camera Not Working")
-            break
+        frame = np.array(image)
 
         # YOLO Detection
         results = model(frame)
 
         annotated_frame = results[0].plot()
 
-        FRAME_WINDOW.image(
+        st.image(
             annotated_frame,
-            channels="BGR"
+            caption="Detected Objects",
+            use_container_width=True
         )
 
-    camera.release()
+        # Display detected objects
+        detected_objects = []
+
+        for box in results[0].boxes:
+            cls = int(box.cls[0])
+            label = model.names[cls]
+            detected_objects.append(label)
+
+        st.subheader("📋 Detected Objects")
+        st.write(detected_objects)
 
 # =====================================================
 # FOOTER
